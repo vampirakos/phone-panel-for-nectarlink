@@ -593,7 +593,7 @@ static std::wstring BuildContentXaml(bool withNs) {
   </Grid.RowDefinitions>
   <StackPanel Margin="12,22,12,8">
     <FontIcon x:Name="NlPhoneIcon" Glyph="&#xE8EA;" FontSize="48" HorizontalAlignment="Center"
-              Foreground="{ThemeResource SystemControlForegroundAccentBrush}" FontFamily=")xaml" + font + LR"xaml("/>
+              FontFamily=")xaml" + font + LR"xaml("/>
     <TextBlock x:Name="NlName" Text="NectarLink" FontSize="14" FontWeight="SemiBold" Margin="0,10,0,0"
                HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"/>
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6" Opacity="0.75" Height="24" Margin="0,2,0,0">
@@ -743,10 +743,8 @@ static wchar_t KindGlyph(const std::wstring& kind) {
     return 0xE8EA;
 }
 
-static winrt::Windows::UI::Color KindTint(const std::wstring& kind) {
-    if (kind == L"photo") return {0x66, 0x3B, 0x9A, 0xE1};
-    if (kind == L"file") return {0x66, 0xE1, 0xA2, 0x3B};
-    if (kind == L"link") return {0x66, 0x4C, 0xC2, 0x6A};
+// Monochrome on purpose: the only accent-colored element is the "Open NectarLink" button.
+static winrt::Windows::UI::Color KindTint(const std::wstring&) {
     return {0x40, 0x80, 0x80, 0x80};
 }
 
