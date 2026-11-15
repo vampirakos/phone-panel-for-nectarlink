@@ -5,6 +5,8 @@
 // @version         1.0.0
 // @author          vampirakos
 // @github          https://github.com/vampirakos
+// @homepage        https://github.com/vampirakos/phone-panel-for-nectarlink
+// @license         MIT
 // @include         StartMenuExperienceHost.exe
 // @architecture    x86-64
 // @compilerOptions -lole32 -loleaut32 -lruntimeobject -lwinhttp -lshell32 -ladvapi32 -luser32
