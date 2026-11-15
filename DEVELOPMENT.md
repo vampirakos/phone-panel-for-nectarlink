@@ -75,8 +75,9 @@ aren't in the API. The wallpaper image isn't sent at all; on Android 13+ reading
 - **Look:** monochrome Segoe Fluent Icons. The battery glyph steps in 10%
   (`E850`–`E859`, `E83F`; charging `E85A`–`E862`, `E83E`, `EA93`) at FontSize 22, with
   `TextLineBounds="Tight"` on the status text so it centers with the icon. Theme colors use
-  system ThemeResources (accent, base low). The only accent-colored element is the "Open
-  NectarLink" button (Windows accent color); the phone icon and Recent tiles are neutral.
+  system ThemeResources (accent, base low). Accent color (Windows accent, light and
+  dark) is used only for the "Open NectarLink" button, the big phone icon and the phone icons
+  in Recent rows. Everything else is neutral, including the Timeline link and tile backgrounds.
 - The Bluetooth status icon was dropped on purpose (the user asked for it to be left out
   for now).
 

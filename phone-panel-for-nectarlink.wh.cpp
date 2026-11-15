@@ -593,7 +593,7 @@ static std::wstring BuildContentXaml(bool withNs) {
   </Grid.RowDefinitions>
   <StackPanel Margin="12,22,12,8">
     <FontIcon x:Name="NlPhoneIcon" Glyph="&#xE8EA;" FontSize="48" HorizontalAlignment="Center"
-              FontFamily=")xaml" + font + LR"xaml("/>
+              Foreground="{ThemeResource SystemControlForegroundAccentBrush}" FontFamily=")xaml" + font + LR"xaml("/>
     <TextBlock x:Name="NlName" Text="NectarLink" FontSize="14" FontWeight="SemiBold" Margin="0,10,0,0"
                HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"/>
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6" Opacity="0.75" Height="24" Margin="0,2,0,0">
@@ -678,7 +678,7 @@ static std::wstring ItemXaml(bool clip) {
   <Grid ColumnSpacing="12">
     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
     <Border x:Name="Tile" Width="34" Height="34" CornerRadius="4">
-      <FontIcon x:Name="Icon" FontSize="16" FontFamily=")xaml" + font + LR"xaml("/>
+      <FontIcon x:Name="Icon" FontSize="16" Foreground="{ThemeResource SystemControlForegroundAccentBrush}" FontFamily=")xaml" + font + LR"xaml("/>
     </Border>
     <StackPanel Grid.Column="1" VerticalAlignment="Center">
       <TextBlock x:Name="Title" FontSize="13" TextTrimming="CharacterEllipsis"/>
@@ -745,7 +745,7 @@ static wchar_t KindGlyph(const std::wstring& kind) {
     return 0xE8EA;
 }
 
-// Monochrome on purpose: the only accent-colored element is the "Open NectarLink" button.
+// Neutral tile background on purpose; the accent color goes on the icons and the Open button.
 static winrt::Windows::UI::Color KindTint(const std::wstring&) {
     return {0x40, 0x80, 0x80, 0x80};
 }
