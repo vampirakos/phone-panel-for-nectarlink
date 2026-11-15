@@ -145,6 +145,7 @@ static void LoadSettings() {
     g_settings.exePath = GetStr(L"exePath");
     g_settings.refreshSeconds = Wh_GetIntSetting(L"refreshSeconds");
     if (g_settings.refreshSeconds < 1) g_settings.refreshSeconds = 5;
+    g_settings.refreshSeconds = std::min(g_settings.refreshSeconds, 3600);  // also keeps *1000 from overflowing
 }
 
 // ---------------------------------------------------------------------------
@@ -220,6 +221,7 @@ static bool LoadApiConfig(ApiConfig& cfg, std::wstring& problem) {
         return false;
     }
     cfg.port = (int)o.GetNamedNumber(L"port", 53320);
+    if (cfg.port < 1 || cfg.port > 65535) cfg.port = 53320;  // port 0 would mean "default HTTP port" to WinHTTP
     cfg.token = Str(o, L"token");
     return true;
 }
@@ -523,6 +525,7 @@ static bool IsSafeToOpen(const std::wstring& path) {
 
 static void OpenRecent(const RecentItem& r) {
     std::wstring target = r.target.substr(0, r.target.find(L'\n'));  // several paths are newline-separated
+    while (!target.empty() && (target.back() == L'\r' || target.back() == L' ')) target.pop_back();
     if (target.rfind(L"http://", 0) == 0 || target.rfind(L"https://", 0) == 0) {
         ShellOpen(target);
         return;
@@ -544,9 +547,13 @@ static void CopyText(const std::wstring& text) {
     EmptyClipboard();
     size_t bytes = (text.size() + 1) * sizeof(wchar_t);
     if (HGLOBAL h = GlobalAlloc(GMEM_MOVEABLE, bytes)) {
-        memcpy(GlobalLock(h), text.c_str(), bytes);
-        GlobalUnlock(h);
-        if (!SetClipboardData(CF_UNICODETEXT, h)) GlobalFree(h);
+        void* mem = GlobalLock(h);
+        if (mem) {
+            memcpy(mem, text.c_str(), bytes);
+            GlobalUnlock(h);
+            if (SetClipboardData(CF_UNICODETEXT, h)) h = nullptr;  // the clipboard owns it now
+        }
+        if (h) GlobalFree(h);
     }
     CloseClipboard();
     Flash(L"Copied to clipboard");
@@ -967,9 +974,14 @@ static void TickPanel() {
         if (auto mc = FindByName(companion, L"MainContent", 0)) g_ui->hiddenContent = winrt::make_weak(mc);
         Wh_Log(L"Attached to Start's phone panel");
     }
-    if (auto mc = g_ui->hiddenContent.get(); mc && mc.Visibility() != wux::Visibility::Collapsed) {
-        mc.Visibility(wux::Visibility::Collapsed);
+    // Start can recreate Phone Link's MainContent while our host stays loaded. Our root is
+    // transparent, so a new one would show through: look for it again.
+    auto mc = g_ui->hiddenContent.get();
+    if (!mc) {
+        mc = FindByName(host, L"MainContent", 0);
+        if (mc) g_ui->hiddenContent = winrt::make_weak(mc);
     }
+    if (mc && mc.Visibility() != wux::Visibility::Collapsed) mc.Visibility(wux::Visibility::Collapsed);
 }
 
 static void OnTick() {
