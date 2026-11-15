@@ -618,6 +618,7 @@ static std::wstring BuildContentXaml(bool withNs) {
       <Grid Margin="4,0,4,4">
         <TextBlock Text="Recent" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
         <HyperlinkButton x:Name="NlTimeline" Content="Timeline" FontSize="12" Padding="4,2"
+                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                          HorizontalAlignment="Right" VerticalAlignment="Center"/>
       </Grid>
       <StackPanel x:Name="NlRecentList" Spacing="2"/>
@@ -637,7 +638,8 @@ static std::wstring BuildContentXaml(bool withNs) {
       <ColumnDefinition Width="Auto"/>
     </Grid.ColumnDefinitions>
     <Button x:Name="NlOpen" HorizontalAlignment="Stretch" Height="36" CornerRadius="4"
-            Background="{ThemeResource SystemControlBackgroundAccentBrush}" Foreground="White">
+            Background="{ThemeResource SystemControlBackgroundAccentBrush}"
+            Foreground="{ThemeResource SystemControlForegroundChromeWhiteBrush}">
       <StackPanel Orientation="Horizontal" Spacing="8">
         <FontIcon Glyph="&#xE8A7;" FontSize="14" FontFamily=")xaml" + font + LR"xaml("/>
         <TextBlock Text="Open NectarLink" FontSize="13" FontWeight="SemiBold"/>
