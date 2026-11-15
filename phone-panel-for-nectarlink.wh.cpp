@@ -32,16 +32,15 @@ It puts your phone in the Start menu's phone panel (the one Phone Link uses):
 * In NectarLink, turn on **Settings → Local automation API**. Without it,
   Find phone / Clipboard / Take photo / Send files and the footer buttons still
   work; status, Recent, Clipboard, Scan doc and Play on phone need it.
-* For the default mode, keep **Show mobile device in Start** turned on in
+* Keep **Show mobile device in Start** turned on in
   Windows Settings → Personalization → Start.
 
-## Modes
+## How it works
 
-* **Replace Phone Link's panel** (default): the panel shows NectarLink instead
-  of Phone Link. It only does so while NectarLink is installed and has a paired
-  phone; otherwise Phone Link's panel is left alone. The phone button next to
-  the search box shows and hides it.
-* **Separate floating panel**: a card next to the Start menu instead.
+The panel shows NectarLink instead of Phone Link. By default it only does so
+while NectarLink is installed and has a paired phone; otherwise Phone Link's
+panel is left alone (the "Replace Phone Link's panel" setting can force it).
+The phone button next to the search box shows and hides it.
 
 ## Privacy and safety
 
@@ -65,11 +64,6 @@ what this mod works with.
 
 // ==WindhawkModSettings==
 /*
-- mode: companion
-  $name: Mode
-  $options:
-  - companion: Replace Phone Link's panel
-  - popup: Separate floating panel
 - takeOver: auto
   $name: Replace Phone Link's panel
   $description: Auto = only while NectarLink is installed and has a paired phone
@@ -80,26 +74,6 @@ what this mod works with.
   $name: Recent items to show (0 hides the section)
 - clipCount: 3
   $name: Clipboard items to show (0 hides the section)
-- side: right
-  $name: Side (floating mode)
-  $options:
-  - right: Right
-  - left: Left
-- align: top
-  $name: Vertical alignment (floating mode)
-  $options:
-  - top: Top
-  - bottom: Bottom
-  - stretch: Same height as Start
-- gap: 12
-  $name: Gap between Start and the panel (px, floating mode)
-- width: 300
-  $name: Panel width (px, floating mode)
-- anchorName: MainMenu
-  $name: Start element to attach to (floating mode)
-- windowedPopup: false
-  $name: Windowed panel (floating mode)
-  $description: Turn on if the panel is clipped or doesn't show up
 - deviceName: ""
   $name: Phone name
   $description: Which paired phone to show. Empty = the first connected one
@@ -117,7 +91,6 @@ what this mod works with.
 
 #include <algorithm>
 #include <atomic>
-#include <cmath>
 #include <ctime>
 #include <functional>
 #include <mutex>
@@ -148,19 +121,10 @@ namespace json = winrt::Windows::Data::Json;
 // Settings
 // ---------------------------------------------------------------------------
 
-enum class Align { Top, Bottom, Stretch };
-
 struct Settings {
-    bool companion = true;
     bool takeOverAlways = false;
     int recentCount = 4;
     int clipCount = 3;
-    bool left = false;
-    Align align = Align::Top;
-    int gap = 12;
-    int width = 300;
-    std::wstring anchorName = L"MainMenu";
-    bool windowedPopup = false;
     std::wstring deviceName;
     std::wstring exePath;
     int refreshSeconds = 5;
@@ -174,21 +138,9 @@ static std::wstring GetStr(PCWSTR name) {
 }
 
 static void LoadSettings() {
-    g_settings.companion = GetStr(L"mode") != L"popup";
     g_settings.takeOverAlways = GetStr(L"takeOver") == L"always";
     g_settings.recentCount = std::clamp(Wh_GetIntSetting(L"recentCount"), 0, 10);
     g_settings.clipCount = std::clamp(Wh_GetIntSetting(L"clipCount"), 0, 10);
-    g_settings.left = GetStr(L"side") == L"left";
-    std::wstring align = GetStr(L"align");
-    g_settings.align = align == L"bottom"    ? Align::Bottom
-                       : align == L"stretch" ? Align::Stretch
-                                             : Align::Top;
-    g_settings.gap = Wh_GetIntSetting(L"gap");
-    g_settings.width = Wh_GetIntSetting(L"width");
-    if (g_settings.width < 240) g_settings.width = 300;
-    g_settings.anchorName = GetStr(L"anchorName");
-    if (g_settings.anchorName.empty()) g_settings.anchorName = L"MainMenu";
-    g_settings.windowedPopup = Wh_GetIntSetting(L"windowedPopup") != 0;
     g_settings.deviceName = GetStr(L"deviceName");
     g_settings.exePath = GetStr(L"exePath");
     g_settings.refreshSeconds = Wh_GetIntSetting(L"refreshSeconds");
@@ -348,7 +300,7 @@ PhoneStatus g_status;
 std::wstring g_flash;          // short message after an action ("Copied", errors)
 ULONGLONG g_flashUntil = 0;
 std::atomic<bool> g_statusDirty{true};
-std::atomic<bool> g_takeOverAllowed{false};  // companion mode: may we replace Phone Link's panel?
+std::atomic<bool> g_takeOverAllowed{false};  // may we replace Phone Link's panel?
 
 static void Flash(const std::wstring& msg) {
     {
@@ -700,15 +652,7 @@ static std::wstring BuildContentXaml(bool withNs) {
 }
 
 static std::wstring BuildPanelXaml() {
-    if (g_settings.companion) return BuildContentXaml(true);
-    return L"<Border" + std::wstring(kNs) + LR"xaml( CornerRadius="8" BorderThickness="1"
-        BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
-  <Border.Background>
-    <AcrylicBrush BackgroundSource="HostBackdrop"
-                  TintColor="{ThemeResource SystemChromeMediumColor}" TintOpacity="0.8"
-                  FallbackColor="{ThemeResource SystemChromeMediumColor}"/>
-  </Border.Background>
-  )xaml" + BuildContentXaml(false) + L"</Border>";
+    return BuildContentXaml(true);
 }
 
 // One row of Recent (tile with icon) or Clipboard (small icon, button background).
@@ -743,7 +687,6 @@ static std::wstring ItemXaml(bool clip) {
 }
 
 struct UiState {
-    wuxc::Primitives::Popup popup{nullptr};
     wux::FrameworkElement root{nullptr};
     winrt::weak_ref<wuxc::Grid> companionHost;
     winrt::weak_ref<wux::FrameworkElement> hiddenContent;
@@ -755,8 +698,6 @@ struct UiState {
     std::wstring recentSig, clipSig;
     wux::DispatcherTimer timer{nullptr};
     winrt::event_token tickToken{};
-    winrt::weak_ref<wux::FrameworkElement> anchor;
-    bool xamlRootSet = false;
     bool dumped = false;
 };
 static UiState* g_ui = nullptr;
@@ -984,8 +925,8 @@ static void RestorePhoneLink() {
     g_ui->hiddenContent = {};
 }
 
-// Companion mode: put the panel inside Start's phone panel, in place of Phone Link's content.
-static void TickCompanion() {
+// Put the panel inside Start's phone panel, in place of Phone Link's content.
+static void TickPanel() {
     if (!g_takeOverAllowed) {
         if (g_ui->companionHost.get()) {
             DetachRoot();
@@ -1031,57 +972,6 @@ static void TickCompanion() {
     }
 }
 
-static wux::FrameworkElement FindAnchor() {
-    auto window = wux::Window::Current();
-    if (!window) return nullptr;
-    if (auto content = window.Content()) {
-        if (auto fe = FindByName(content, g_settings.anchorName, 0)) return fe;
-    }
-    for (auto const& p : wuxm::VisualTreeHelper::GetOpenPopups(window)) {
-        if (g_ui->popup && p == g_ui->popup) continue;
-        if (auto fe = FindByName(p.Child(), g_settings.anchorName, 0)) return fe;
-    }
-    return nullptr;
-}
-
-static void TickPopup() {
-    auto anchor = g_ui->anchor.get();
-    if (!anchor || !anchor.IsLoaded()) {
-        anchor = FindAnchor();
-        g_ui->anchor = anchor ? winrt::make_weak(anchor) : winrt::weak_ref<wux::FrameworkElement>{};
-        if (!anchor && !g_ui->dumped) {
-            g_ui->dumped = true;
-            Wh_Log(L"Anchor \"%s\" not found yet. Named elements in Start:", g_settings.anchorName.c_str());
-            int budget = 400;
-            if (auto w = wux::Window::Current(); w && w.Content()) DumpNames(w.Content(), 0, budget);
-        }
-    }
-    bool show = anchor && anchor.ActualWidth() >= 1 && anchor.Visibility() == wux::Visibility::Visible;
-    if (!show) {
-        if (g_ui->popup.IsOpen()) g_ui->popup.IsOpen(false);
-        return;
-    }
-    if (!g_ui->xamlRootSet) {
-        if (auto xr = anchor.XamlRoot()) g_ui->popup.XamlRoot(xr);
-        g_ui->popup.ShouldConstrainToRootBounds(!g_settings.windowedPopup);
-        g_ui->xamlRootSet = true;
-    }
-    auto pt = anchor.TransformToVisual(nullptr).TransformPoint(wf::Point{0, 0});
-    double aw = anchor.ActualWidth(), ah = anchor.ActualHeight();
-    double w = g_settings.width;
-    if (g_settings.align == Align::Stretch) {
-        if (std::isnan(g_ui->root.Height()) || std::abs(g_ui->root.Height() - ah) > 0.5) g_ui->root.Height(ah);
-    } else if (!std::isnan(g_ui->root.Height())) {
-        g_ui->root.ClearValue(wux::FrameworkElement::HeightProperty());
-    }
-    double x = g_settings.left ? pt.X - w - g_settings.gap : pt.X + aw + g_settings.gap;
-    double y = pt.Y;
-    if (g_settings.align == Align::Bottom) y = pt.Y + ah - g_ui->root.ActualHeight();
-    if (g_ui->popup.HorizontalOffset() != x) g_ui->popup.HorizontalOffset(x);
-    if (g_ui->popup.VerticalOffset() != y) g_ui->popup.VerticalOffset(y);
-    if (!g_ui->popup.IsOpen()) g_ui->popup.IsOpen(true);
-}
-
 static void OnTick() {
     if (!g_ui) return;
     try {
@@ -1093,8 +983,7 @@ static void OnTick() {
             }
         }
         if (g_statusDirty.exchange(false)) ApplyStatus();
-        if (g_settings.companion) TickCompanion();
-        else TickPopup();
+        TickPanel();
     } catch (winrt::hresult_error const& e) {
         Wh_Log(L"Tick error 0x%08X: %s", (unsigned)e.code(), e.message().c_str());
     }
@@ -1107,7 +996,6 @@ static void WINAPI InitUi(PVOID) {
         g_ui = new UiState();
         auto root = wux::Markup::XamlReader::Load(BuildPanelXaml()).as<wux::FrameworkElement>();
         g_ui->root = root;
-        if (!g_settings.companion) root.Width(g_settings.width);
         g_ui->nameText = Named<wuxc::TextBlock>(root, L"NlName");
         g_ui->statusText = Named<wuxc::TextBlock>(root, L"NlStatus");
         g_ui->hintText = Named<wuxc::TextBlock>(root, L"NlHint");
@@ -1135,12 +1023,6 @@ static void WINAPI InitUi(PVOID) {
         OnClick(Named<wuxc::Button>(root, L"NlSettings"), [] { RunTask(L"open-settings"); });
         OnClick(Named<wuxc::HyperlinkButton>(root, L"NlTimeline"), [] { RunTask(L"open-timeline"); });
 
-        if (!g_settings.companion) {
-            g_ui->popup = wuxc::Primitives::Popup();
-            g_ui->popup.Child(root);
-            g_ui->popup.IsLightDismissEnabled(false);
-        }
-
         g_ui->timer = wux::DispatcherTimer();
         g_ui->timer.Interval(std::chrono::milliseconds(500));
         g_ui->tickToken = g_ui->timer.Tick([](wf::IInspectable const&, wf::IInspectable const&) { OnTick(); });
@@ -1165,10 +1047,6 @@ static void WINAPI UninitUi(PVOID) {
         g_ui->clicks.clear();
         if (g_ui->recentList) g_ui->recentList.Children().Clear();
         if (g_ui->clipList) g_ui->clipList.Children().Clear();
-        if (g_ui->popup) {
-            g_ui->popup.IsOpen(false);
-            g_ui->popup.Child(nullptr);
-        }
         DetachRoot();
         RestorePhoneLink();
     } catch (...) {

@@ -17,14 +17,14 @@ in the Windows 11 Start menu, in the side panel Phone Link normally uses.
   built per item, and their text is set in code, never interpolated into XAML.
 - A `DispatcherTimer` (500 ms) on the XAML thread attaches the panel, applies status and
   shows short "flash" messages.
-- **Companion mode (default):** it finds `RightCompanion` (`StartMenu.StartMenuCompanion`,
+- **Always replaces Phone Link's panel** (the floating-panel mode was removed on purpose; don't
+  bring it back): it finds `RightCompanion` (`StartMenu.StartMenuCompanion`,
   or `LeftCompanion`), adds our root to its `CompanionRoot` Grid (RowSpan and ColumnSpan 99,
   margin 1), and collapses Phone Link's `MainContent`. It re-collapses it if Phone Link shows
   it again, and restores it on uninit.
   - Needs Windows Settings → Personalization → Start → "Show mobile device in Start" on.
   - Replacing Phone Link's panel only happens while NectarLink is installed and not known to
     be unpaired (`g_takeOverAllowed`), unless the setting `takeOver` = `always`.
-- **Floating mode:** an unparented `Popup` placed next to the `MainMenu` element.
 - If it can't find an element, it logs the named-element tree of Start once (`DumpNames`).
   Use that log to fix element names after Windows updates.
 
@@ -91,8 +91,7 @@ aren't in the API. The wallpaper image isn't sent at all; on Android 13+ reading
 ## To do / ideas
 
 - Check the light theme and high contrast. Only dark mode has been seen.
-- Translations (Greek first). All strings are English now.
-- Optional phone wallpaper: a user-picked local image shown in a phone frame (mod only), or
-  the phone's accent color (needs a small NectarLink API patch).
+- English only, no translations (decided).
+- No phone wallpaper for now; wait to see if NectarLink adds it (decided).
 - Retest after Windows updates. Start's element names can change.
 - ARM64 build once NectarLink ships ARM64.
