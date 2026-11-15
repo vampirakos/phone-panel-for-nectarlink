@@ -35,8 +35,9 @@ in the Windows 11 Start menu, in the side panel Phone Link normally uses.
   - Needs Windows Settings → Personalization → Start → "Show mobile device in Start" on.
   - Replacing Phone Link's panel only happens while NectarLink is installed and not known to
     be unpaired (`g_takeOverAllowed`), unless the setting `takeOver` = `always`.
-- If the phone panel isn't found, the search backs off (500 ms doubling up to 30 s), since it
-  walks Start's whole visual tree. The previous `Visibility` of Phone Link's `MainContent`
+- If the phone panel isn't found, the search backs off (500 ms doubling up to 3 s), since it
+  walks Start's whole visual tree. The cap is low on purpose: Start may only build its phone
+  panel when it is opened, and a long delay would leave Phone Link's own panel showing. The previous `Visibility` of Phone Link's `MainContent`
   is saved (`hiddenPrev`) and restored, not forced to Visible.
 - **Threads:** one worker thread (`g_worker`, a `std::optional<std::thread>` marked
   `[[clang::no_destroy]]`, because Windhawk doesn't call `Wh_ModUninit` when Start itself
@@ -90,8 +91,9 @@ aren't in the API. The wallpaper image isn't sent at all; on Android 13+ reading
     objects, and files from the phone have no Mark of the Web, so Office wouldn't use
     Protected View). `.docx`, `.xlsx` and `.pptx` are fine. This was changed after the AI
     review.
-  - Paths starting with `\\` (network shares, device paths) are never touched; the Timeline
-    opens instead.
+  - Only plain drive-letter paths (`C:\...`, `/` converted to `\`) are touched. Network shares
+    (`\\server`, `//server`) and NT or device paths (`\??\UNC\...`) are never opened; the
+    Timeline opens instead.
 - **Trademark:** NectarLink's policy allows "compatible with" / "for NectarLink" but not
   anything that looks official. Keep "Unofficial" and "not affiliated" in the description and
   readme. Don't use the NectarLink logo.

@@ -6,6 +6,8 @@ Windows 11 Start menu, in the side panel Phone Link normally uses.
 > **Unofficial.** This mod is not affiliated with or endorsed by NectarLink. It is compatible
 > with [NectarLink](https://github.com/thtbee/nectarlink) and talks only to its local API.
 
+![The NectarLink panel in the Start menu](screenshot.png)
+
 ## Requirements
 
 - Windows 11 with Windhawk installed (x64)
