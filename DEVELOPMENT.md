@@ -87,11 +87,19 @@ List tasks): `find-phone`, `send-clipboard`, `take-photo`, `send-files`, `open-t
 `HKLM\Software\Nectarlink\InstallDir`, then `%ProgramFiles%\Nectarlink`, or the `exePath`
 setting.
 
-Not available from NectarLink yet (would need changes in NectarLink): messages,
-notifications, calls, phone toggles (Wi-Fi, Bluetooth, DND). The phone's toggles and its
-wallpaper-derived accent color reach the PC (`AppState.toggles`, Material You seed) but
-aren't in the API. The wallpaper image isn't sent at all; on Android 13+ reading it needs
-"All files access".
+Not available **in the local API** yet: notifications, messages (with unread counts), calls and
+phone toggles (Wi-Fi, Bluetooth, DND). NectarLink's app already has all of these (a Messages
+tab, notifications on the PC, quick toggles at the Elevated level); they just aren't exposed to
+other tools. Requested in https://github.com/thtbee/nectarlink/issues/441 (read-only
+notifications and unread count first, toggles later). Once that exists, the mod could show
+them in the panel. Until then, don't read NectarLink's database directly.
+
+The phone's toggles and its wallpaper-derived accent color reach the PC (`AppState.toggles`,
+Material You seed) but aren't in the API either. The wallpaper image isn't sent at all; on
+Android 13+ reading it needs "All files access".
+
+Related upstream issues: #91 (Start menu companion like Phone Link; Windows only draws it for
+Phone Link for now, so this mod does it by editing Start's XAML) and #85 (Windows widget).
 
 ## Decisions to keep
 
